@@ -33,46 +33,45 @@ fprintf('  Ceny [$]: kukurydza=%.2f, pszenica=%.2f, soja=%.2f, owies=%.2f\n\n', 
     cena_kukurydza, cena_pszenica, cena_soja, cena_owies);
 
 %% 2. PRZEKSZTAŁCENIE DO POSTACI STANDARDOWEJ
-% Zmienne decyzyjne: x1, x2, x3, x4 [akry]
 % x1 - kukurydza, x2 - pszenica, x3 - soja, x4 - owies
 
 % Funkcja celu: Maksymalizacja przychodu = minimalizacja (-przychód)
 f = -przychod_akr;  % Ujemne, bo linprog minimalizuje
 
-% Ograniczenia nierównościowe w formie A*x ≤ b
+% Ograniczenia nierównościowe
 A = [1, 1, 1, 1;        % x1+x2+x3+x4 ≤ 500 (całkowity areał)
      0, 0, 1, 0;        % x3 ≤ 120 (limit soi)
      0, -1, 1, 1];      % -x2 + x3 + x4 ≤ 0 (x2 ≥ x3+x4 -> -x2+x3+x4 ≤ 0)
 
 b = [area_total; soja_limit; 0];
 
-% Ograniczenia równościowe (brak)
+% Ograniczenia równościowe
 Aeq = [];
 beq = [];
 
 % Dolne ograniczenia zmiennych
-lb = [kukurydza_min_buszle/plon_kukurydza; 0; 0; 0]; % x1 ≥ 90.91, reszta ≥ 0
+lb = [kukurydza_min_buszle/plon_kukurydza; 0; 0; 0];
 
 % Górne ograniczenia zmiennych
 ub = [Inf; Inf; soja_limit; Inf]; % x3 ≤ 120
 
-%% 3. ROZWIĄZANIE ZA POMOCĄ linprog (ALGORYTM DUAL-SIMPLEX)
-fprintf('=== ROZWIĄZANIE 1: linprog (dual-simplex) ===\n');
+%% 3. ROZWIĄZANIE ZA POMOCĄ linprog
+fprintf('=== ROZWIĄZANIE 1 ===\n');
 
 options = optimoptions('linprog', 'Display', 'iter', 'Algorithm', 'dual-simplex');
 
 [x_linprog, fval_linprog, exitflag_linprog, output_linprog] = linprog(f, A, b, Aeq, beq, lb, ub, options);
 
 if exitflag_linprog == 1
-    fprintf('\n--- Znaleziono rozwiązanie optymalne ---\n');
+    fprintf('\n--- Rozwiązanie optymalne ---\n');
     fprintf('Zmienne decyzyjne [akry]:\n');
-    fprintf('  Kukurydza (x1): %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Kukurydza: %8.2f akrów (%.0f buszli)\n', ...
         x_linprog(1), x_linprog(1)*plon(1));
-    fprintf('  Pszenica (x2): %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Pszenica: %8.2f akrów (%.0f buszli)\n', ...
         x_linprog(2), x_linprog(2)*plon(2));
-    fprintf('  Soja (x3):     %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Soja: %8.2f akrów (%.0f buszli)\n', ...
         x_linprog(3), x_linprog(3)*plon(3));
-    fprintf('  Owies (x4):    %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Owies: %8.2f akrów (%.0f buszli)\n', ...
         x_linprog(4), x_linprog(4)*plon(4));
     
     fprintf('\nWyniki:\n');
@@ -95,23 +94,23 @@ else
     fprintf('Solver nie znalazł rozwiązania. Exit flag: %d\n', exitflag_linprog);
 end
 
-%% 4. ROZWIĄZANIE ZA POMOCĄ linprog (ALGORYTM INTERIOR-POINT)
-fprintf('\n\n=== ROZWIĄZANIE 2: linprog (interior-point) ===\n');
+%% 4. ROZWIĄZANIE ZA POMOCĄ linprog
+fprintf('\n\n=== ROZWIĄZANIE 2 ===\n');
 
 options_ip = optimoptions('linprog', 'Display', 'iter', 'Algorithm', 'interior-point');
 
 [x_ip, fval_ip, exitflag_ip, output_ip] = linprog(f, A, b, Aeq, beq, lb, ub, options_ip);
 
 if exitflag_ip == 1
-    fprintf('\n--- Znaleziono rozwiązanie optymalne ---\n');
+    fprintf('\n--- Rozwiązanie optymalne ---\n');
     fprintf('Zmienne decyzyjne [akry]:\n');
-    fprintf('  Kukurydza (x1): %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Kukurydza: %8.2f akrów (%.0f buszli)\n', ...
         x_ip(1), x_ip(1)*plon(1));
-    fprintf('  Pszenica (x2): %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Pszenica: %8.2f akrów (%.0f buszli)\n', ...
         x_ip(2), x_ip(2)*plon(2));
-    fprintf('  Soja (x3):     %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Soja: %8.2f akrów (%.0f buszli)\n', ...
         x_ip(3), x_ip(3)*plon(3));
-    fprintf('  Owies (x4):    %8.2f akrów (%.0f buszli)\n', ...
+    fprintf('  Owies: %8.2f akrów (%.0f buszli)\n', ...
         x_ip(4), x_ip(4)*plon(4));
     
     fprintf('\nWyniki:\n');
@@ -150,18 +149,17 @@ if exitflag_linprog == 1 && exitflag_ip == 1
     fprintf('  Różnica w przychodzie: $%.6f\n', diff_fval);
     
     if max(diff_x) < 1e-6 && diff_fval < 1e-6
-        fprintf('  ✓ Oba solvery dały IDENTYCZNE rozwiązanie.\n');
+        fprintf('  Oba solvery dały identyczne rozwiązanie.\n');
     elseif max(diff_x) < 1e-3 && diff_fval < 1e-3
-        fprintf('  ≈ Rozwiązania są praktycznie identyczne (różnice < 0.001).\n');
+        fprintf('  Rozwiązania są prawie identyczne (różnice < 0.001).\n');
     else
-        fprintf('  ! Uwaga: Rozwiązania różnią się istotnie.\n');
+        fprintf('  Rozwiązania różnią się istotnie.\n');
     end
     
     fprintf('\nEfektywność solverów:\n');
     fprintf('  Dual-Simplex: %d iteracji\n', output_linprog.iterations);
     fprintf('  Interior-Point: %d iteracji\n', output_ip.iterations);
     
-    % Wyświetlenie informacji o algorytmach
     fprintf('\nCharakterystyka algorytmów:\n');
     fprintf('  Dual-Simplex:\n');
     fprintf('    - Działa na brzegach obszaru dopuszczalnego\n');
@@ -211,9 +209,8 @@ for i = 1:4
         uprawy{i}, przychod_upraw(i), 100*przychod_upraw(i)/(-fval_linprog));
 end
 
-%% 7. ANALIZA WRAŻLIWOŚCI - CO SIĘ STANIE, GDY ZMIENIMY PARAMETRY?
+%% 7. ANALIZA WRAŻLIWOŚCI
 fprintf('\n\n=== ANALIZA WRAŻLIWOŚCI ===\n');
-fprintf('Co się stanie, jeśli zmienimy parametry?\n\n');
 
 % a) Zwiększenie całkowitego areału
 new_area = area_total + 50;
@@ -237,5 +234,3 @@ fprintf('b) Zwiększenie limitu soi o 50 akrów (do %d):\n', new_soja_limit);
 fprintf('   Nowy przychód: $%.2f\n', -fval_new2);
 fprintf('   Przyrost przychodu: $%.2f\n', przychod_inc2);
 fprintf('   Krańcowy przychód z akra soi: $%.2f/akr\n\n', przychod_inc2/50);
-
-fprintf('=== KONIEC ANALIZY ===\n');
