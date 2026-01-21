@@ -1,6 +1,5 @@
 function [f, g] = funkcja_rosenbrocka(x)
-    % Oblicza wartość i gradient funkcji Rosenbrocka dla dowolnego wymiaru N (parzystego)
-    % x - wektor kolumnowy
+    % Oblicza wartość i gradient funkcji Rosenbrocka dla dowolnego wymiaru N
     
     n = length(x);
     f = 0;
@@ -15,7 +14,6 @@ function [f, g] = funkcja_rosenbrocka(x)
         term2 = (1 - x_i)^2;
         f = f + term1 + term2;
         
-        % Gradient
         % Pochodna po x_i
         g(i) = g(i) - 400 * x_i * (x_next - x_i^2) - 2 * (1 - x_i);
         % Pochodna po x_{i+1}
