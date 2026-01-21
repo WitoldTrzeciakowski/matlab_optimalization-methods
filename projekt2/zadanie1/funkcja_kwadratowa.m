@@ -2,7 +2,7 @@ function [f, g] = funkcja_kwadratowa(x)
     % funkcja kwadratowa f(x) = sum (i * x_i^2)
     
     n = length(x);
-    vec_coeff = (1:n)'; % Wagi: 1, 2, ..., n (zwiększa uwarunkowanie)
+    vec_coeff = (1:n)';
     
     % Wartość
     f = sum(vec_coeff .* (x.^2));
