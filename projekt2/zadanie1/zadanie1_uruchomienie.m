@@ -61,7 +61,7 @@ title('Optymalizacja SR1 - Funkcja Kwadratowa');
 
 % Rysowanie poziomic
 [Xq, Yq] = meshgrid(-3:0.1:3, -3:0.1:3);
-Zq = Xq.^2 + 10*Yq.^2;
+Zq = 1*Xq.^2 + 2*Yq.^2;
 contour(Xq, Yq, Zq, 30); 
 colorbar;
 
