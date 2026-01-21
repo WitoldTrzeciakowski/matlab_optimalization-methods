@@ -1,42 +1,36 @@
-function [x_opt, f_val, historia_x] = opt_sr1_armijo(fun_uchwyt, x0, max_iter, tol)
-    % fun_uchwyt: uchwyt do funkcji zwracającej [f, g] = fun(x)
-    % x0: punkt startowy
-    % max_iter: maksymalna liczba iteracji
-    % tol: tolerancja dla normy gradientu
+function [x_opt, f_val, historia_x] = solver_sr1_armijo(fun_uchwyt, x0, max_iter, tol)
     
     % Parametry metody
-    eta = 0.1;      % Parametr Armijo (zazwyczaj 1e-4 do 0.1)
-    beta = 0.5;     % Krok redukcji w Armijo (backtracking)
+    eta = 0.1;      % Parametr Armijo
+    beta = 0.5;     % Krok redukcji w Armijo
     epsilon_sr1 = 1e-8; % Zabezpieczenie mianownika w SR1
     
-    x = x0(:); % Upewnij się, że x to wektor kolumnowy
+    x = x0(:);
     n = length(x);
-    B = eye(n); % Początkowe przybliżenie Hesjanu jako macierz jednostkowa
+    B = eye(n);
     
-    % Inicjalizacja historii (dla animacji)
+    % Inicjalizacja historii
     historia_x = x;
     
     [f_curr, g_curr] = fun_uchwyt(x);
     
     for k = 1:max_iter
-        % 1. Sprawdzenie kryterium stopu (norma gradientu)
+        % 1. Sprawdzenie kryterium stopu
         if norm(g_curr) < tol
             disp(['Zbieżność osiągnięta w iteracji: ', num2str(k)]);
             break;
         end
         
         % 2. Wyznaczenie kierunku d_k: B_k * d_k = -g_k
-        % Używamy operatora \ (mldivide) dla efektywności
         d = -B \ g_curr;
         
         % Sprawdzenie czy kierunek jest kierunkiem spadku
         if g_curr' * d > 0
-            % Jeśli nie (np. B przestało być dodatnio określone), resetujemy do antygradientu
             d = -g_curr;
             B = eye(n);
         end
         
-        % 3. Dobór długości kroku (Reguła Armijo) - Backtracking
+        % 3. Dobór długości kroku (Reguła Armijo)
         alpha = 1;
         iter_armijo = 0;
         
@@ -49,7 +43,7 @@ function [x_opt, f_val, historia_x] = opt_sr1_armijo(fun_uchwyt, x0, max_iter, t
                 break; % Warunek spełniony
             end
             
-            alpha = alpha * beta; % Zmniejsz krok
+            alpha = alpha * beta;
             iter_armijo = iter_armijo + 1;
             if iter_armijo > 50
                 break; % Zabezpieczenie przed pętlą nieskończoną
@@ -61,14 +55,14 @@ function [x_opt, f_val, historia_x] = opt_sr1_armijo(fun_uchwyt, x0, max_iter, t
         [f_next, g_next] = fun_uchwyt(x_next);
         
         % 5. Aktualizacja macierzy B (SR1)
-        s = x_next - x;         % Różnica położeń
-        y = g_next - g_curr;    % Różnica gradientów
+        s = x_next - x;
+        y = g_next - g_curr;
         
         % Obliczenie mianownika SR1
         Bs = B * s;
         mianownik = (y - Bs)' * s;
         
-        % Warunek stabilności SR1 (aktualizujemy tylko, gdy mianownik nie jest bliski 0)
+        % Warunek stabilności SR1
         if abs(mianownik) > epsilon_sr1 * norm(s) * norm(y - Bs)
             term = (y - Bs);
             B = B + (term * term') / mianownik;

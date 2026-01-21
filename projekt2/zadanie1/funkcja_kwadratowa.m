@@ -1,6 +1,5 @@
-function [f, g] = quadratic_val_grad(x)
-    % Prosta funkcja kwadratowa f(x) = sum (i * x_i^2)
-    % Pozwala przetestować algorytm na funkcji wypukłej
+function [f, g] = funkcja_kwadratowa(x)
+    % funkcja kwadratowa f(x) = sum (i * x_i^2)
     
     n = length(x);
     vec_coeff = (1:n)'; % Wagi: 1, 2, ..., n (zwiększa uwarunkowanie)

@@ -1,4 +1,4 @@
-function [f, g] = rosenbrock_val_grad(x)
+function [f, g] = funkcja_rosenbrocka(x)
     % Oblicza wartość i gradient funkcji Rosenbrocka dla dowolnego wymiaru N (parzystego)
     % x - wektor kolumnowy
     
