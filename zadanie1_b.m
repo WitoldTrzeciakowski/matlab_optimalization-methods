@@ -1,164 +1,167 @@
+diary sympleksTAB
 clear all
 clc
 
-% ====================================================
-% PROBLEM ORYGINALNY:
-% Maksymalizacja: 9x₁ - 5x₂
-% Ograniczenia:
-%   3x₁ - x₂ + 3x₃ = 10          (równość)
-%   2x₁ + 3x₂ + 3x₃ ≤ 16         (nierówność ≤)
-%   -3x₁ + 2x₂ + 3x₃ ≤ 16        (nierówność ≤)
-%   x₁, x₂, x₃ ≥ 0
-% ====================================================
+%% ===================== DANE =====================
+c = [9 -5 0]'  % wektor kosztow: min 9x1 - 5x2 + 0x3
 
-% ====================================================
-% FAZA I - Minimalizacja sumy zmiennych sztucznych
-% ====================================================
+% Macierz A dla: x1 x2 x3 s1 s2 a1 a2
+A = [ 3  -1  3   0  0  1  0
+      2   3  3  -1  0  0  1
+     -3   2  3   0  1  0  0 ]
 
-% Macierz współczynników A dla zmiennych:
-% x₁, x₂, x₃, s₂, s₃, a₁
-% gdzie: s₂, s₃ - zmienne dopełniające (slack) dla 2. i 3. ograniczenia
-%        a₁ - zmienna sztuczna dla 1. ograniczenia (równość)
-A = [3 -1 3 0 0 1
-     2  3 3 1 0 0
-    -3  2 3 0 1 0]
+b = [10
+     16
+     16]
 
-% Wektor prawej strony
-b = [10; 16; 16]
+% FAZA I: minimalizacja sumy zmiennych sztucznych
+c1 = [0 0 0 0 0 1 1]'  % koszty fazy I
 
-% Wektor kosztów dla fazy I: minimalizacja a₁
-c = [0 0 0 0 0 1]'
+%% ===================== FAZA I =====================
+% Krok 0: Inicjalizacja tablicy sympleks
+T = [c1' 0
+     A   b]
 
-% Liczba zmiennych i ograniczeń
-n = 6  % x₁, x₂, x₃, s₂, s₃, a₁
-m = 3  % liczba ograniczeń
-
-% Zakres indeksów wierszy macierzy A w tablicy (wiersze 2..m+1)
-i1_m = 2:(m+1)
+% Zerowanie wiersza celu dla zmiennych bazowych (a1, a2)
+T(1,:) = T(1,:) - T(2,:) - T(3,:)
 
 % ===============================================
-% Krok 0. Inicjalizacja tablicy sympleksu Fazy I
-% ===============================================
-T = [c', 0; A, b]
-
-% ===============================================
-% Krok 1. Wyzerowanie wiersza 0 dla zmiennej bazowej a₁
-% Wiersz 0: [0 0 0 0 0 1 0]
-% Wiersz 2: [3 -1 3 0 0 1 10] (gdzie a₁ ma współczynnik 1)
-% Odejmujemy wiersz 2 od wiersza 0
-% ===============================================
-T(1,:) = T(1,:) - T(2,:)
-
-% ===============================================
-% ITERACJA 1 Fazy I
-% ===============================================
-
 % Krok 1. Wybór zmiennej wchodzącej (kolumny głównej)
-% Szukamy najbardziej ujemnego współczynnika w wierszu 0
-[min_val, q] = min(T(1,1:end-1))
-q  % wyświetlamy numer kolumny
+% ===============================================
+[min_val, q] = min(T(1,1:7))
 
+% ===============================================
 % Krok 2. Wybór zmiennej wychodzącej (wiersza głównego)
-% Obliczamy ilorazy tylko dla dodatnich współczynników w kolumnie q
-ratios = T(i1_m, n+1) ./ T(i1_m, q)
-ratios(T(i1_m, q) <= 0) = Inf
+% ===============================================
+ratios = T(2:4,8) ./ T(2:4,q)
+ratios(T(2:4,q) <= 0) = Inf
 [min_ratio, r_idx] = min(ratios)
-r = i1_m(r_idx)  % numer wiersza w T
+r = r_idx + 1
 
+% ===============================================
 % Krok 3. Aktualizacja tablicy (pivoting)
-% Dzielimy wiersz główny przez element główny
+% ===============================================
 T(r,:) = T(r,:) / T(r,q)
-
-% Aktualizacja wiersza 0 (funkcja celu)
 T(1,:) = T(1,:) - T(1,q) * T(r,:)
+if r ~= 2, T(2,:) = T(2,:) - T(2,q) * T(r,:), end
+if r ~= 3, T(3,:) = T(3,:) - T(3,q) * T(r,:), end
+if r ~= 4, T(4,:) = T(4,:) - T(4,q) * T(r,:), end
 
-% Aktualizacja wiersza 3
-T(3,:) = T(3,:) - T(3,q) * T(r,:)
-
-% Aktualizacja wiersza 4
-T(4,:) = T(4,:) - T(4,q) * T(r,:)
-
-% ===============================================
-% Sprawdzenie czy Faza I zakończona (w = 0)
-% ===============================================
-w = T(1,n+1)
+T
 
 % ===============================================
-% FAZA II - Przygotowanie tablicy dla oryginalnego problemu
+% Krok 1. Wybór zmiennej wchodzącej (kolumny głównej)
 % ===============================================
-
-% Usuwamy kolumnę zmiennej sztucznej a₁ (kolumna 6)
-T2 = T(2:end, [1:5, n+1])
-
-% Dodajemy wiersz z oryginalną funkcją celu
-% Maksymalizacja 9x₁ - 5x₂ odpowiada minimalizacji -9x₁ + 5x₂
-c_original = [-9 5 0 0 0]'
-T2 = [c_original', 0; T2]
-
-% Nowe wymiary
-n2 = 5  % liczba zmiennych w fazie II: x₁, x₂, x₃, s₂, s₃
-m2 = 3  % liczba ograniczeń
-i1_m2 = 2:(m2+1)
+[min_val, q] = min(T(1,1:7))
 
 % ===============================================
-% Wyzerowanie wiersza 0 dla zmiennych bazowych
+% Krok 2. Wybór zmiennej wychodzącej (wiersza głównego)
 % ===============================================
-% Zmienne bazowe: x₁ (wiersz 2, kolumna 1), s₂ (wiersz 3, kolumna 4), s₃ (wiersz 4, kolumna 5)
-
-% Dla x₁: współczynnik w wierszu 0 wynosi -9, odejmujemy -9 × wiersz 2
-T2(1,:) = T2(1,:) - T2(1,1) * T2(2,:)
-
-% Dla s₂: współczynnik w wierszu 0 wynosi 0, nic nie robimy
-% Dla s₃: współczynnik w wierszu 0 wynosi 0, nic nie robimy
+ratios = T(2:4,8) ./ T(2:4,q)
+ratios(T(2:4,q) <= 0) = Inf
+[min_ratio, r_idx] = min(ratios)
+r = r_idx + 1
 
 % ===============================================
-% Sprawdzenie optymalności w fazie II
-% Wszystkie współczynniki w wierszu 0 są nieujemne → rozwiązanie optymalne
+% Krok 3. Aktualizacja tablicy (pivoting)
 % ===============================================
+T(r,:) = T(r,:) / T(r,q)
+T(1,:) = T(1,:) - T(1,q) * T(r,:)
+if r ~= 2, T(2,:) = T(2,:) - T(2,q) * T(r,:), end
+if r ~= 3, T(3,:) = T(3,:) - T(3,q) * T(r,:), end
+if r ~= 4, T(4,:) = T(4,:) - T(4,q) * T(r,:), end
 
-% ===============================================
-% Odczyt rozwiązania
-% ===============================================
-x = zeros(n2,1)
+T
 
-% x₁ jest w wierszu 2, kolumna 1
-x(1) = T2(2, n2+1)
+w = T(1,8)  % wartość funkcji celu fazy I
 
-% s₂ jest w wierszu 3, kolumna 4  
-x(4) = T2(3, n2+1)
+%% ===================== FAZA II =====================
+% Tworzenie tablicy bez zmiennych sztucznych
+T2 = T(2:4,[1:5 8])  % kolumny: x1,x2,x3,s1,s2 i b
 
-% s₃ jest w wierszu 4, kolumna 5
-x(5) = T2(4, n2+1)
+% Wstawienie wiersza celu oryginalnego: dla max -9x1 + 5x2
+T2 = [-9 5 0 0 0 0
+       T2]
 
-% x₂ i x₃ są niebazowe, więc mają wartość 0
+% Korekta wiersza celu dla zmiennych bazowych
+% Zmienne bazowe: x3 (wiersz 2, kolumna 3), x2 (wiersz 3, kolumna 2), s2 (wiersz 4, kolumna 5)
+% Wyzerowanie dla x2
+T2(1,:) = T2(1,:) - T2(1,2) * T2(3,:)
+% Wyzerowanie dla x3
+T2(1,:) = T2(1,:) - T2(1,3) * T2(2,:)
+% Wyzerowanie dla s2
+T2(1,:) = T2(1,:) - T2(1,5) * T2(4,:)
 
-% ===============================================
-% Weryfikacja ograniczeń
-% ===============================================
-% Ograniczenie 1: 3x₁ - x₂ + 3x₃ = 10
-check1 = 3*x(1) - x(2) + 3*x(3)
-
-% Ograniczenie 2: 2x₁ + 3x₂ + 3x₃ + s₂ = 16
-check2 = 2*x(1) + 3*x(2) + 3*x(3) + x(4)
-
-% Ograniczenie 3: -3x₁ + 2x₂ + 3x₃ + s₃ = 16
-check3 = -3*x(1) + 2*x(2) + 3*x(3) + x(5)
-
-% Wartość oryginalnej funkcji celu (maksymalizacja)
-z = 9*x(1) - 5*x(2)
+T2
 
 % ===============================================
-% Wypisanie wyników
+% Krok 1. Wybór zmiennej wchodzącej (kolumny głównej)
 % ===============================================
-disp('Rozwiązanie optymalne:')
-disp(['x₁ = ', num2str(x(1))])
-disp(['x₂ = ', num2str(x(2))])
-disp(['x₃ = ', num2str(x(3))])
-disp(['s₂ = ', num2str(x(4))])
-disp(['s₃ = ', num2str(x(5))])
-disp(['Wartość funkcji celu z = ', num2str(z)])
+[max_val, q] = max(T2(1,1:5))
 
-disp('Weryfikacja ograniczeń:')
-disp(['3x₁ - x₂ + 3x₃ = ', num2str(check1), ' (powinno być 10)'])
-disp(['2x₁ + 3x₂ + 3x₃ + s₂ = ', num2str(check2), ' (powinno być 16)'])
-disp(['-3x₁ + 2x₂ + 3x₃ + s₃ = ', num2str(check3), ' (powinno być 16)'])
+% ===============================================
+% Krok 2. Wybór zmiennej wychodzącej (wiersza głównego)
+% ===============================================
+ratios = T2(2:4,6) ./ T2(2:4,q)
+ratios(T2(2:4,q) <= 0) = Inf
+[min_ratio, r_idx] = min(ratios)
+r = r_idx + 1
+
+% ===============================================
+% Krok 3. Aktualizacja tablicy (pivoting)
+% ===============================================
+T2(r,:) = T2(r,:) / T2(r,q)
+T2(1,:) = T2(1,:) - T2(1,q) * T2(r,:)
+if r ~= 2, T2(2,:) = T2(2,:) - T2(2,q) * T2(r,:), end
+if r ~= 3, T2(3,:) = T2(3,:) - T2(3,q) * T2(r,:), end
+if r ~= 4, T2(4,:) = T2(4,:) - T2(4,q) * T2(r,:), end
+
+T2
+
+% ===============================================
+% Krok 1. Wybór zmiennej wchodzącej (kolumny głównej)
+% ===============================================
+[max_val, q] = max(T2(1,1:5))
+ratios = T2(2:4,6) ./ T2(2:4,q)
+ratios(T2(2:4,q) <= 0) = Inf
+[min_ratio, r_idx] = min(ratios)
+r = r_idx + 1
+
+% ===============================================
+% Krok 3. Aktualizacja tablicy (pivoting)
+% ===============================================
+T2(r,:) = T2(r,:) / T2(r,q)
+T2(1,:) = T2(1,:) - T2(1,q) * T2(r,:)
+if r ~= 2, T2(2,:) = T2(2,:) - T2(2,q) * T2(r,:), end
+if r ~= 3, T2(3,:) = T2(3,:) - T2(3,q) * T2(r,:), end
+if r ~= 4, T2(4,:) = T2(4,:) - T2(4,q) * T2(r,:), end
+
+T2
+
+% ===============================================
+% Krok 1. Wybór zmiennej wchodzącej (kolumny głównej)
+% ===============================================
+[max_val, q] = max(T2(1,1:5))
+% Jeśli max_val <= 0, rozwiązanie optymalne
+
+%% ===================== ROZWIAZANIE =====================
+% Odczyt wartości zmiennych bazowych
+% Po ostatniej iteracji zmienne bazowe to: x1 (wiersz 2), x2 (wiersz 3), s1 (wiersz 4)
+x1 = T2(2,6)
+x2 = T2(3,6)
+s1 = T2(4,6)
+
+% Zmienne niebazowe
+x3 = 0
+s2 = 0
+
+% Wartość funkcji celu: min 9x1 - 5x2
+z = 9*x1 - 5*x2
+
+% Sprawdzenie ograniczeń
+lewa_strona = A(:,1:5) * [x1; x2; x3; s1; s2]
+prawa_strona = b
+
+% Sprawdzenie nieujemności
+x1, x2, x3, s1, s2
+diary off;

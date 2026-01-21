@@ -1,28 +1,5 @@
 diary sympleksALG
 
-% ====================================================
-% PROGRAM: ALGORYTM SYMPLEKS DWUFAZOWY - WERSJA ALGEBRAICZNA
-% Rozwiązanie problemu programowania liniowego
-% ====================================================
-
-% PROBLEM ORYGINALNY (przypuszczalnie):
-% Maksymalizacja: 9x₁ - 5x₂
-% z ograniczeniami:
-%   3x₁ - x₂ + 3x₃ = -10
-%   2x₁ + 3x₂ + 3x₃ <= 16
-%  -3x₁ + 2x₂ + 3x₃ >= -16
-%   x₁, x₂, x₃ ≥ 0
-
-% PRZEKSZTAŁCENIE DO POSTACI STANDARDOWEJ:
-% Dodajemy zmienne dopełniające x₄, x₅, x₆ dla każdego ograniczenia (≤)
-% Dodajemy zmienne sztuczne x₇, x₈ dla pierwszych dwóch ograniczeń
-
-% Macierz A po dodaniu wszystkich zmiennych:
-% Kolumny 1-3: x₁, x₂, x₃ (zmienne pierwotne)
-% Kolumna 4: zmienna dopełniająca dla 1. ograniczenia
-% Kolumna 5: zmienna dopełniająca dla 3. ograniczenia
-% Kolumna 6: zmienna sztuczna dla 1. ograniczenia
-% Kolumna 7: zmienna sztuczna dla 2. ograniczenia
 A = [3 -1 3 0 0 1 0; 
      2 3 3 -1 0 0 1; 
      -3 2 3 0 1 0 0]
@@ -57,13 +34,12 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 [cfq, q] = min(cfN)
 
 % KROK 4: cfq = -6 < 0 → kontynuujemy algorytm
-% KROK 5: Obliczenie kierunku poprawy dla zmiennej wchodzącej
 afq = (A(:,B))^(-1) * A(:,q)
 
-% KROK 6: Test ilorazowy - wybór zmiennej wychodzącej z bazy
+% KROK 6: Test  
 bf ./ afq
 
-% Wybór: minimalny dodatni iloraz w wierszu 2 → p = 2
+% Wybór: minimalny dodatni iloraz w wierszu 2 => p = 2
 p = 2 
 
 % KROK 7: Wymiana zmiennych (x₃ wchodzi do bazy, x₇ wychodzi)
@@ -85,13 +61,13 @@ q = N(q_idx)
 % KROK 5: Kierunek poprawy
 afq = (A(:,B))^(-1) * A(:,q)
 
-% KROK 6: Test ilorazowy
+% KROK 6: Test 
 bf ./ afq
 
-% Wybór: minimalny dodatni iloraz w wierszu 2 → p = 2
+% Wybór: minimalny dodatni iloraz w wierszu 2 => p = 2
 p = 2
 
-% KROK 7: Wymiana zmiennych (x₁ wchodzi do bazy, x₃ wychodzi)
+% KROK 7: Wymiana zmiennych 
 l = B(p)
 B(p) = q
 N(q == N) = l
@@ -106,7 +82,7 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 % KROK 3: Wybór zmiennej wchodzącej
 [cfq, q] = min(cfN)
 
-% cfq = -1.5 < 0 → kontynuujemy algorytm
+% cfq = -1.5 < 0 => kontynuujemy algorytm
 
 % KROK 1 (ponownie): Wyznaczenie bazowego rozwiązania
 bf = (A(:,B))^(-1) * b
@@ -138,14 +114,11 @@ bf = (A(:,B))^(-1) * b
 % KROK 2: Nowe zredukowane koszty
 cfN = c(N,:) - A(:,N)'*(A(:,B)^(-1))'*c(B,:)
 
-% KROK 3: Test optymalności
+% KROK 3: Test cfq
 [cfq, q] = min(cfN)
 
-% KONIEC FAZY I: cfq = 0 ≥ 0 → znaleziono bazowe rozwiązanie dopuszczalne
+% KONIEC FAZY I: cfq = 0 >+ 0 => znaleziono bazowe rozwiązanie dopuszczalne
 % Wszystkie zmienne sztuczne zostały usunięte z bazy
-
-% Wartość funkcji celu fazy I (powinna być 0)
-w = c(B)' * bf
 
 % ====================================================
 % FAZA II - MINIMALIZACJA ORYGINALNEJ FUNKCJI CELU
@@ -155,8 +128,7 @@ w = c(B)' * bf
 % Zachowujemy tylko zmienne pierwotne (x₁-x₃) i dopełniające (x₄, x₅)
 A = A(:, 1:5)
 
-% Oryginalny wektor kosztów: prawdopodobnie maksymalizacja 9x₁ - 5x₂
-% Uwaga: MATLAB domyślnie minimalizuje, więc koszty są z przeciwnymi znakami
+% Oryginalny wektor kosztów
 c = [9; -5; 0; 0; 0]
 
 % Nowe zbiory zmiennych na podstawie końcowej bazy z fazy I
@@ -165,8 +137,6 @@ N = [2; 3]
 
 % Zmienne bazowe: x₄, x₁, x₅
 B = [4; 1; 5]
-
-disp("FAZA 2 - OPTYMALIZACJA ORYGINALNEJ FUNKCJI CELU")
 
 % --- ITERACJA 1 fazy II ---
 % KROK 1: Bazowe rozwiązanie dopuszczalne (kontynuacja z fazy I)
@@ -180,10 +150,9 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 q = N(q_idx)
 
 % KROK 4: cfq = -9 < 0 → kontynuujemy algorytm
-% KROK 5: Kierunek poprawy
 afq = (A(:,B))^(-1) * A(:,q)
 
-% KROK 6: Test ilorazowy
+% KROK 6: Test
 bf ./ afq
 
 % KROK 7: Wymiana zmiennych (x₃ wchodzi do bazy, x₁ wychodzi)
@@ -204,7 +173,6 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 q = N(q_idx)
 
 % KROK 4: cfq = -5 < 0 → kontynuujemy algorytm
-% KROK 5: Kierunek poprawy
 afq = (A(:,B))^(-1) * A(:,q)
 
 % KROK 6: Test ilorazowy
@@ -250,7 +218,7 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 % KROK 3: Wybór zmiennej wchodzącej
 [cfq, q_idx] = min(cfN)
 
-% --- ITERACJA 5 fazy II (ciąg dalszy) ---
+% --- ITERACJA 5 fazy II  ---
 % KROK 1: Nowe bazowe rozwiązanie dopuszczalne
 bf = (A(:,B))^(-1) * b
 
@@ -267,7 +235,6 @@ afq = (A(:,B))^(-1) * A(:,q)
 
 % KROK 6: Test ilorazowy
 bf ./ afq
-disp("break - analiza wyników testu ilorazowego")
 
 % Wybór: minimalny dodatni iloraz w wierszu 2 → p = 2
 p = 2
@@ -277,7 +244,7 @@ l = B(p)
 B(p) = q
 N(q == N) = l
 
-% --- SPRAWDZENIE OPTYMALNOŚCI ---
+%Sprawdzenie cfq 
 bf = (A(:,B))^(-1) * b
 cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 [cfq, q_idx] = min(cfN)
@@ -292,19 +259,11 @@ cfN = c(N) - A(:,N)' * ((A(:,B))^(-1))' * c(B)
 x = zeros(5,1)      % Wektor dla x₁, x₂, x₃, x₄, x₅
 x(B) = bf           % Wartości zmiennych bazowych
 
-% Ekstrakcja wartości zmiennych decyzyjnych
+% Ekstrakcja wartości 
 x1 = x(1)
 x2 = x(2)
 x3 = x(3)
 
-% Weryfikacja spełnienia oryginalnych ograniczeń
-% Ograniczenia w postaci: Ax ≤ b
-check1 = -3*x1 + x2 - 3*x3   % Powinno być ≤ 10
-check2 = -2*x1 - 3*x2 - 3*x3 % Powinno być ≤ 16
-check3 = 3*x1 - 2*x2 - 3*x3  % Powinno być ≤ 16
 
-% Sprawdzenie warunków nieujemności
-nonneg_check = [x1 >= 0, x2 >= 0, x3 >= 0]
 
-% Wszystkie warunki spełnione - rozwiązanie poprawne
 diary off
