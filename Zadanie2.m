@@ -175,8 +175,6 @@ else
     fprintf('Co najmniej jeden solver nie znalazł rozwiązania optymalnego.\n');
 end
 
-%% 6. WIZUALIZACJA WYKORZYSTANIA AREAŁU
-fprintf('\n\n=== WIZUALIZACJA ROZWIĄZANIA ===\n');
 
 figure('Position', [100, 100, 1200, 500]);
 
